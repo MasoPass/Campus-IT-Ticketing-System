@@ -1,0 +1,22 @@
+# Build output
+backend/target/
+*.class
+
+# Local data (dev mode without desktop flag)
+backend/data/
+data/
+
+# Maven downloaded by run.ps1 / build-installer.ps1
+backend/.tools/
+
+# Built installers go on GitHub Releases, not in the repo
+*.exe
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
