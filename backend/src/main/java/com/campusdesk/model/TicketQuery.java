@@ -2,12 +2,6 @@ package com.campusdesk.model;
 
 import java.util.Set;
 
-/**
- * Every filter the ticket list supports. Null / empty = "don't filter on this".
- *
- * @param assigneeMode ANY, UNASSIGNED, or USER (then assigneeId says who)
- * @param requesterId  forced to the student's own id when a student searches
- */
 public record TicketQuery(
         Set<TicketStatus> statuses,
         Set<Priority> priorities,
@@ -36,7 +30,7 @@ public record TicketQuery(
         size = Math.min(MAX_PAGE_SIZE, Math.max(1, size));
     }
 
-    /** Copy with the requester forced (used to restrict students to their own tickets). */
+    // forces requester (students only see their own)
     public TicketQuery forRequester(long id) {
         return new TicketQuery(statuses, priorities, categoryId, assigneeMode, assigneeId, id, text,
                 overdueOnly, sort, page, size);

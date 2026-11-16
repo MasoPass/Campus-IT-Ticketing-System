@@ -6,11 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/** Small JDBC / SQL helpers shared by the repositories. */
 public final class Rows {
     private Rows() {}
 
-    // JDBC's getLong() returns 0 for SQL NULL; these return a real null instead.
+    // getLong() gives 0 for NULL, these give null instead
 
     static Long longOrNull(ResultSet rs, String col) throws SQLException {
         long v = rs.getLong(col);
@@ -22,11 +21,7 @@ public final class Rows {
         return rs.wasNull() ? null : v;
     }
 
-    /**
-     * User text -> safe FTS5 query: "Wi-Fi drops!" -> "wi"* "fi"* "drops"*
-     * Each word is quoted, so FTS operators typed by a user (OR, NEAR, -, :) are plain text.
-     * The * makes it a prefix match. Returns null if there's nothing searchable.
-     */
+    // "Wi-Fi drops!" -> "wi"* "fi"* "drops"*
     public static String ftsQuery(String text) {
         if (text == null) return null;
         List<String> terms = new ArrayList<>();

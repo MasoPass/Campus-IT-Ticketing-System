@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class SlaCalculatorTest {
 
     private static final Instant CREATED = Instant.parse("2026-11-12T10:00:00Z");
-    private static final SlaPolicy HIGH = new SlaPolicy(Priority.HIGH, 240, 1440);   // 4 h / 24 h
+    private static final SlaPolicy HIGH = new SlaPolicy(Priority.HIGH, 240, 1440); // 4h / 24h
 
     @Test
     void deadlinesAreCreatedPlusTargets() {

@@ -50,7 +50,7 @@ class TicketWorkflowTest {
         assertEquals(Set.of(CLOSED, IN_PROGRESS), TicketWorkflow.allowedFor(RESOLVED, STUDENT, true, false));
         assertEquals(Set.of(CLOSED), TicketWorkflow.allowedFor(NEW, STUDENT, true, false));
         assertEquals(Set.of(), TicketWorkflow.allowedFor(IN_PROGRESS, STUDENT, true, false));
-        assertEquals(Set.of(), TicketWorkflow.allowedFor(RESOLVED, STUDENT, false, false));   // not theirs
+        assertEquals(Set.of(), TicketWorkflow.allowedFor(RESOLVED, STUDENT, false, false)); // not theirs
     }
 
     @Test

@@ -40,11 +40,6 @@ public class CommentRepository {
                         .addValue("b", body).addValue("now", now));
     }
 
-    /**
-     * Timeline for a ticket, oldest first. Students pass includeInternal=false, so internal
-     * notes are filtered out IN THE DATABASE QUERY - they never even reach the Java side
-     * for a student request, which is safer than filtering later.
-     */
     public List<Comment> forTicket(long ticketId, boolean includeInternal) {
         return jdbc.query("""
                         SELECT m.*, u.full_name AS author_name, u.role AS author_role
@@ -55,7 +50,7 @@ public class CommentRepository {
                 new MapSqlParameterSource("t", ticketId), MAPPER);
     }
 
-    /** Text of all messages (not events), for the search index. */
+    // message text for the search index
     public List<String> messageBodies(long ticketId) {
         return jdbc.queryForList("SELECT body FROM ticket_comments WHERE ticket_id = :t AND kind = 'MESSAGE' ORDER BY id",
                 new MapSqlParameterSource("t", ticketId), String.class);

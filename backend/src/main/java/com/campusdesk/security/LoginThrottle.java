@@ -9,16 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Slows down password guessing: after MAX_FAILURES wrong passwords for one email within
- * WINDOW, further attempts are refused until the oldest failure falls out of the window.
- *
- * Data structure: a ConcurrentHashMap (thread-safe, many logins at once) from email to a
- * Deque of failure times. New failures go on the back; expired ones are popped off the
- * front. That's a "sliding window" - each check only touches the few recent entries.
- *
- * Kept in memory on purpose: restarting the app clears it, which is fine for a desktop app.
- */
+// locks an email for 10 min after 5 wrong passwords
 public class LoginThrottle {
 
     public static final int MAX_FAILURES = 5;
@@ -31,7 +22,6 @@ public class LoginThrottle {
         this.clock = clock;
     }
 
-    /** How long until this email may try again, or Duration.ZERO if it's allowed now. */
     public Duration retryAfter(String email) {
         Deque<Instant> q = failures.get(key(email));
         if (q == null) return Duration.ZERO;

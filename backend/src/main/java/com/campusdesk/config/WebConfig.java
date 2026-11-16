@@ -18,7 +18,7 @@ public class WebConfig implements WebMvcConfigurer {
         this.authInterceptor = authInterceptor;
     }
 
-    /** Every API call needs a signed-in user, except the ones you need in order to sign in. */
+    // everything needs a login except the login endpoints
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor)

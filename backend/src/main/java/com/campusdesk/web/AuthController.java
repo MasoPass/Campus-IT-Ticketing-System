@@ -17,11 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Sign-in / sign-up / sign-out. These endpoints are excluded from AuthInterceptor
- * (you can't require a login in order to log in), except /password which is
- * checked by hand below.
- */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -34,7 +29,7 @@ public class AuthController {
         this.users = users;
     }
 
-    /** What the app should show on start-up: first-run setup, sign-in, or the signed-in user. */
+    // setup screen, login screen, or the signed-in user
     @GetMapping("/state")
     public Map<String, Object> state(HttpServletRequest request) {
         Map<String, Object> out = new HashMap<>();
@@ -82,11 +77,7 @@ public class AuthController {
         auth.changeOwnPassword(me.id(), body.currentPassword(), body.newPassword());
     }
 
-    /**
-     * Throw away any existing session and start a fresh one. Getting a NEW session id at
-     * login prevents "session fixation": an attacker who planted a known session id before
-     * you logged in can't ride along on your logged-in session afterwards.
-     */
+    // new session id on login (session fixation)
     private static void startSession(HttpServletRequest request, User user) {
         HttpSession old = request.getSession(false);
         if (old != null) old.invalidate();

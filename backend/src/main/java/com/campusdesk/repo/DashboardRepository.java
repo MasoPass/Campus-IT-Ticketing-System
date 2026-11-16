@@ -7,10 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Reporting queries for the dashboard. Each returns plain rows (List of Map) because they
- * go straight to JSON - no need for a record per chart.
- */
 @Repository
 public class DashboardRepository {
 
@@ -22,7 +18,7 @@ public class DashboardRepository {
         this.jdbc = jdbc;
     }
 
-    /** Headline numbers in one pass. */
+    // headline numbers in one query
     public Map<String, Object> summary(String now, String since) {
         return jdbc.queryForMap("""
                         SELECT
@@ -47,13 +43,11 @@ public class DashboardRepository {
                 new MapSqlParameterSource().addValue("now", now).addValue("since", since));
     }
 
-    /** Open tickets per status (NEW, ASSIGNED, ...). */
     public List<Map<String, Object>> openByStatus() {
         return jdbc.queryForList("SELECT t.status AS label, COUNT(*) AS count FROM tickets t WHERE "
                 + OPEN + " GROUP BY t.status", new MapSqlParameterSource());
     }
 
-    /** Open tickets per priority, most urgent first. */
     public List<Map<String, Object>> openByPriority() {
         return jdbc.queryForList("SELECT t.priority AS label, COUNT(*) AS count FROM tickets t WHERE " + OPEN
                 + " GROUP BY t.priority"
@@ -61,7 +55,7 @@ public class DashboardRepository {
                 new MapSqlParameterSource());
     }
 
-    /** Tickets per category over the last 30 days (LEFT JOIN keeps categories with zero). */
+    // last 30 days, LEFT JOIN keeps empty categories
     public List<Map<String, Object>> byCategory(String since) {
         return jdbc.queryForList("""
                         SELECT c.name AS label, COUNT(t.id) AS count
@@ -73,14 +67,7 @@ public class DashboardRepository {
                         """, new MapSqlParameterSource("since", since));
     }
 
-    /**
-     * Tickets created per day for the last 14 days.
-     *
-     * A plain GROUP BY date(created_at) would SKIP days with no tickets, leaving gaps in the
-     * chart. So a RECURSIVE CTE first generates every date in the range (start from 13 days
-     * ago, keep adding one day until today), then LEFT JOINs the tickets onto that calendar,
-     * which gives every day a row, with 0 where nothing was filed.
-     */
+    // last 14 days, the CTE fills in days with no tickets
     public List<Map<String, Object>> createdPerDay(String now) {
         return jdbc.queryForList("""
                         WITH RECURSIVE days(day) AS (
@@ -98,11 +85,6 @@ public class DashboardRepository {
                         """, new MapSqlParameterSource("now", now));
     }
 
-    /**
-     * Per-technician workload. RANK() is a WINDOW FUNCTION: unlike GROUP BY it doesn't
-     * collapse rows, it adds a column computed across all rows - here, each person's rank
-     * by tickets resolved in the last 30 days (ties share a rank).
-     */
     public List<Map<String, Object>> technicianWorkload(String now, String since) {
         return jdbc.queryForList("""
                         SELECT u.id, u.full_name AS name, u.role,

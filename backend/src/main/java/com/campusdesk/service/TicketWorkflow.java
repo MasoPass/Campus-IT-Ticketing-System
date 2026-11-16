@@ -16,26 +16,10 @@ import static com.campusdesk.model.TicketStatus.NEW;
 import static com.campusdesk.model.TicketStatus.RESOLVED;
 import static com.campusdesk.model.TicketStatus.WAITING_ON_USER;
 
-/**
- * The ticket lifecycle as a FINITE STATE MACHINE: a fixed set of states and a table of
- * which moves are legal. Keeping the rules in one table (instead of if-statements spread
- * through the code) makes them easy to read, test and change.
- *
- *            ┌──────────── assign ───────────┐
- *   NEW ─────┴─► ASSIGNED ─► IN_PROGRESS ◄─► WAITING_ON_USER
- *                    │            │                 │
- *                    └────────────┴──► RESOLVED ◄───┘
- *                                       │    ▲
- *                              confirm  ▼    │ reopen
- *                                     CLOSED ┘ (admin)
- *
- * Who may make each move depends on the role (see allowedFor).
- * Pure Java: no Spring, no database.
- */
 public final class TicketWorkflow {
     private TicketWorkflow() {}
 
-    /** Every legal move, regardless of who makes it. EnumMap = array indexed by enum ordinal: tiny and fast. */
+    // every legal move
     private static final Map<TicketStatus, Set<TicketStatus>> GRAPH = new EnumMap<>(TicketStatus.class);
 
     static {
@@ -47,12 +31,6 @@ public final class TicketWorkflow {
         GRAPH.put(CLOSED, EnumSet.of(IN_PROGRESS));
     }
 
-    /**
-     * The statuses this person may move the ticket to right now.
-     *
-     * @param isRequester the user filed this ticket
-     * @param isAssignee  the ticket is assigned to this user
-     */
     public static Set<TicketStatus> allowedFor(TicketStatus from, Role role, boolean isRequester, boolean isAssignee) {
         Set<TicketStatus> legal = GRAPH.getOrDefault(from, Set.of());
         EnumSet<TicketStatus> out = EnumSet.noneOf(TicketStatus.class);
@@ -67,23 +45,21 @@ public final class TicketWorkflow {
     }
 
     private static boolean permitted(TicketStatus from, TicketStatus to, Role role, boolean isRequester, boolean isAssignee) {
-        // ASSIGNED is only entered by assigning someone (TicketService.assign), never picked directly.
+        // ASSIGNED only happens by assigning someone
         if (to == ASSIGNED) return false;
 
         switch (role) {
             case ADMIN:
-                return true;   // any legal move
+                return true;
             case TECHNICIAN:
-                // Technicians work the tickets assigned to them (or pick up a NEW one by starting it).
-                // They can't close a ticket that was never resolved, and can't reopen a CLOSED one.
-                // Starting a NEW ticket is how a technician picks it up (the service assigns it to them).
+                // techs work their own tickets or start a NEW one
                 if (from == CLOSED) return false;
                 if (from == NEW) return to == IN_PROGRESS;
                 if (!isAssignee) return false;
                 return to != CLOSED || from == RESOLVED;
             case STUDENT:
                 if (!isRequester) return false;
-                // A student can confirm the fix, say it's still broken, or withdraw a ticket nobody's working on.
+                // confirm, reopen, or withdraw before anyone starts
                 if (from == RESOLVED) return to == CLOSED || to == IN_PROGRESS;
                 return to == CLOSED && (from == NEW || from == ASSIGNED);
             default:
@@ -91,7 +67,7 @@ public final class TicketWorkflow {
         }
     }
 
-    /** Moving into RESOLVED needs a written resolution; withdrawing/closing early does too (it explains why). */
+    // resolving or closing early needs a resolution
     public static boolean requiresResolution(TicketStatus from, TicketStatus to) {
         return to == RESOLVED || (to == CLOSED && from != RESOLVED);
     }

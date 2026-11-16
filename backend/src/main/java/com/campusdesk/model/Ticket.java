@@ -2,11 +2,6 @@ package com.campusdesk.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * A ticket row joined with the names the UI needs (category, requester, assignee).
- * {@code sla} is computed in Java from the deadlines and the current time; it is null
- * until the service fills it in with {@link #withSla(SlaState)}.
- */
 public record Ticket(
         long id,
         String title,
@@ -43,7 +38,7 @@ public record Ticket(
                 closedAt, responseDueAt, resolutionDueAt, messageCount, state);
     }
 
-    /** Human-friendly reference, e.g. HD-00042. */
+    // HD-00042
     @JsonProperty("number")
     public String number() {
         return String.format("HD-%05d", id);

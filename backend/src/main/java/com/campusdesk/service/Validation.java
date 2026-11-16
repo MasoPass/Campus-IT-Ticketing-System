@@ -5,7 +5,6 @@ import com.campusdesk.error.ApiException;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-/** Input rules shared by sign-up, user management and tickets. */
 public final class Validation {
     private Validation() {}
 
@@ -42,7 +41,7 @@ public final class Validation {
         return s;
     }
 
-    /** Trims; null/blank -> null when optional, error when required. */
+    // trims, blank -> null if optional, error if required
     public static String text(String raw, String field, int max, boolean required) {
         String t = raw == null ? "" : raw.strip();
         if (t.isEmpty()) {

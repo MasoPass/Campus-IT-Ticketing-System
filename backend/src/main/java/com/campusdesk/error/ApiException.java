@@ -2,11 +2,6 @@ package com.campusdesk.error;
 
 import org.springframework.http.HttpStatus;
 
-/**
- * Thrown anywhere in the service layer; ApiExceptionHandler turns it into an HTTP
- * response with the right status code. The static factories keep call sites short:
- * {@code throw ApiException.notFound("Ticket", id);}
- */
 public class ApiException extends RuntimeException {
     private final HttpStatus status;
 

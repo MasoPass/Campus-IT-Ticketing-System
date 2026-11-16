@@ -16,25 +16,14 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Everything that has to happen BEFORE Spring starts, in plain Java:
- *  - decide desktop vs dev mode,
- *  - detect an already-running CampusDesk (so double-clicking the icon twice just
- *    focuses the app instead of starting a second server),
- *  - pick a free port,
- *  - publish/read the runtime file (server.json) that tells the MCP server which port
- *    the app is on,
- *  - open the app window.
- */
 public final class DesktopBootstrap {
     private DesktopBootstrap() {}
 
     public static final int DEFAULT_PORT = 47130;
     private static final Pattern PORT_IN_JSON = Pattern.compile("\"port\"\\s*:\\s*(\\d+)");
 
-    // ------------------------------------------------------------------ modes & folders
 
-    /** Desktop mode = installed app or run.ps1: own window, tray icon, data in AppData. */
+    // installed app or run.ps1
     public static boolean isDesktopMode() {
         String v = System.getProperty("campusdesk.desktop", System.getenv("CAMPUSDESK_DESKTOP"));
         return "true".equalsIgnoreCase(v == null ? "" : v.trim());
@@ -44,19 +33,18 @@ public final class DesktopBootstrap {
         return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
     }
 
-    /** %LOCALAPPDATA%\CampusDesk on Windows, ~/.campusdesk elsewhere. */
+    // %LOCALAPPDATA%\CampusDesk on Windows, ~/.campusdesk elsewhere
     public static Path appHome() {
         String local = System.getenv("LOCALAPPDATA");
         if (isWindows() && local != null && !local.isBlank()) return Path.of(local, "CampusDesk");
         return Path.of(System.getProperty("user.home"), ".campusdesk");
     }
 
-    /** The MCP server reads this file to find the running app's port. */
+    // a second launch reads this to find the running app
     public static Path runtimeFile() {
         return appHome().resolve("server.json");
     }
 
-    // ------------------------------------------------------------------ ports
 
     public static int preferredPort() {
         String v = System.getProperty("campusdesk.port", System.getenv("CAMPUSDESK_PORT"));
@@ -67,17 +55,13 @@ public final class DesktopBootstrap {
         }
     }
 
-    /**
-     * Returns the preferred port if it's free, otherwise any free port the OS gives us
-     * (binding port 0 asks the OS to pick one). There's a tiny window where another program
-     * could grab the port before Spring binds it, which is acceptable for a desktop app.
-     */
+    // use the preferred port if it's free, otherwise any free one
     public static int choosePort(int preferred) {
         if (isFree(preferred)) return preferred;
         try (ServerSocket s = new ServerSocket(0, 0, InetAddress.getLoopbackAddress())) {
             return s.getLocalPort();
         } catch (IOException e) {
-            return preferred;   // let Spring report the real error
+            return preferred; // let Spring report the real error
         }
     }
 
@@ -90,7 +74,6 @@ public final class DesktopBootstrap {
         }
     }
 
-    // ------------------------------------------------------------------ runtime file
 
     public static void writeRuntimeFile(int port) {
         try {
@@ -103,7 +86,7 @@ public final class DesktopBootstrap {
         }
     }
 
-    /** Only deletes the file if it still describes THIS instance's port. */
+    // only delete it if it's still ours
     public static void deleteRuntimeFile(int port) {
         try {
             if (readRuntimePort().orElse(-1) == port) Files.deleteIfExists(runtimeFile());
@@ -121,10 +104,7 @@ public final class DesktopBootstrap {
         }
     }
 
-    /**
-     * Is another CampusDesk already running? We read its port from server.json and ask its
-     * /api/health endpoint. A stale file (app crashed) simply fails the health check.
-     */
+    // is another CampusDesk already running?
     public static Optional<Integer> runningInstancePort() {
         Optional<Integer> port = readRuntimePort();
         if (port.isEmpty()) return Optional.empty();
@@ -141,14 +121,8 @@ public final class DesktopBootstrap {
         }
     }
 
-    // ------------------------------------------------------------------ app window
 
-    /**
-     * Opens CampusDesk in a chromeless "app mode" window (no tabs or address bar) using
-     * Microsoft Edge, which every Windows 10/11 PC has. A separate browser profile folder
-     * keeps it independent from the user's normal browsing. Falls back to Chrome, then to
-     * the default browser.
-     */
+    // open as an app window (no tabs or address bar)
     public static void openWindow(String url) {
         for (Path browser : appModeBrowsers()) {
             if (!Files.isRegularFile(browser)) continue;

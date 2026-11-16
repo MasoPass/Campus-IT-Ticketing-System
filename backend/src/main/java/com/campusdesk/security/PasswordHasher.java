@@ -7,22 +7,11 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-/**
- * Password hashing with PBKDF2-HMAC-SHA256, which ships with every JDK (no extra library).
- *
- * Why not just SHA-256(password)? A plain hash is FAST, so an attacker with a stolen
- * database can try billions of guesses per second. PBKDF2 runs the hash hundreds of
- * thousands of times (a "work factor"), making each guess expensive. A random per-user
- * SALT means two users with the same password get different hashes, which defeats
- * precomputed "rainbow tables".
- *
- * Stored format (one string, so the settings travel with the hash):
- *     pbkdf2-sha256$600000$<salt base64>$<hash base64>
- */
+// PBKDF2 is built into the JDK
 public final class PasswordHasher {
 
     public static final String ALGORITHM_ID = "pbkdf2-sha256";
-    /** OWASP's 2023 recommendation for PBKDF2-HMAC-SHA256. */
+    // OWASP recommendation
     public static final int DEFAULT_ITERATIONS = 600_000;
     private static final int SALT_BYTES = 16;
     private static final int HASH_BITS = 256;
@@ -34,7 +23,6 @@ public final class PasswordHasher {
         this(DEFAULT_ITERATIONS);
     }
 
-    /** Tests use fewer iterations so they run fast. */
     public PasswordHasher(int iterations) {
         this.iterations = iterations;
     }
@@ -55,15 +43,14 @@ public final class PasswordHasher {
             byte[] salt = Base64.getDecoder().decode(parts[2]);
             byte[] expected = Base64.getDecoder().decode(parts[3]);
             byte[] actual = pbkdf2(password.toCharArray(), salt, iters);
-            // Constant-time comparison: a normal equals() returns at the first different byte,
-            // and that timing difference can leak information to an attacker.
+            // constant-time compare
             return MessageDigest.isEqual(expected, actual);
         } catch (IllegalArgumentException e) {
             return false;
         }
     }
 
-    /** True if the stored hash used fewer iterations than we use now (rehash it on next login). */
+    // rehash on next login if iterations went up
     public boolean needsRehash(String stored) {
         String[] parts = stored == null ? new String[0] : stored.split("\\$");
         try {
@@ -78,7 +65,7 @@ public final class PasswordHasher {
         try {
             return SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
         } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("PBKDF2 not available", e);   // every JDK 8+ has it
+            throw new IllegalStateException("PBKDF2 not available", e);
         } finally {
             spec.clearPassword();
         }

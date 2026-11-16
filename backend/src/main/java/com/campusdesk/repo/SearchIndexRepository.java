@@ -4,11 +4,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-/**
- * Writes to the tickets_fts full-text index (rowid = ticket id). FTS5 rows are replaced
- * by delete-then-insert. Kept in sync from Java (TicketService) rather than with triggers,
- * because Spring's schema runner splits schema.sql on ';', which breaks trigger bodies.
- */
 @Repository
 public class SearchIndexRepository {
 

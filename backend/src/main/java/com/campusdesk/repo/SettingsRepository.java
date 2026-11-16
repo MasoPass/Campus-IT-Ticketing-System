@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-/** Categories and SLA policies - the small admin-editable lookup tables. */
 @Repository
 public class SettingsRepository {
 
@@ -42,7 +41,7 @@ public class SettingsRepository {
 
     public long insertCategory(String name) {
         KeyHolder keys = new GeneratedKeyHolder();
-        // New categories go just before "Other" (sort_order 99).
+        // new categories go before "Other"
         jdbc.update("INSERT INTO categories (name, sort_order) VALUES (:name, 90)",
                 new MapSqlParameterSource("name", name.trim()), keys);
         return Objects.requireNonNull(keys.getKey()).longValue();
@@ -53,7 +52,6 @@ public class SettingsRepository {
                 new MapSqlParameterSource().addValue("id", id).addValue("name", name.trim()).addValue("active", active ? 1 : 0));
     }
 
-    /** Most urgent first, using the same CASE ordering trick as the ticket list. */
     public List<SlaPolicy> slaPolicies() {
         return jdbc.query("""
                 SELECT * FROM sla_policies
@@ -72,7 +70,7 @@ public class SettingsRepository {
                         .addValue("r", policy.responseMinutes()).addValue("res", policy.resolutionMinutes()));
     }
 
-    /** Buildings already used on tickets, for the form's autocomplete. */
+    // for the building autocomplete
     public List<String> knownBuildings() {
         return jdbc.queryForList("""
                         SELECT building FROM tickets

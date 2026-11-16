@@ -8,7 +8,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-/** Fills any controller parameter of type CurrentUser with the user AuthInterceptor loaded. */
+// lets controllers take a CurrentUser parameter
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
 
     @Override

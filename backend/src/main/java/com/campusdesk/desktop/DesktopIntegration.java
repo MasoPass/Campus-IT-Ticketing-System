@@ -19,11 +19,6 @@ import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.net.URL;
 
-/**
- * The Spring side of desktop mode: once the web server is up, publish its port, open the
- * app window and put an icon in the system tray (Open / Quit). Closing the window leaves
- * CampusDesk running in the tray, so Claude/Codex can still reach it.
- */
 @Component
 public class DesktopIntegration {
     private static final Logger log = LoggerFactory.getLogger(DesktopIntegration.class);
@@ -36,7 +31,7 @@ public class DesktopIntegration {
         this.context = context;
     }
 
-    /** Fires when Tomcat is listening; the event tells us the actual port. */
+    // runs once the server is listening
     @EventListener
     public void onWebServerReady(WebServerInitializedEvent event) {
         port = event.getWebServer().getPort();
@@ -74,7 +69,7 @@ public class DesktopIntegration {
 
         trayIcon = new TrayIcon(image, "CampusDesk", menu);
         trayIcon.setImageAutoSize(true);
-        trayIcon.addActionListener(e -> DesktopBootstrap.openWindow(url()));   // double-click
+        trayIcon.addActionListener(e -> DesktopBootstrap.openWindow(url())); // double-click
         try {
             SystemTray.getSystemTray().add(trayIcon);
         } catch (AWTException e) {
@@ -82,7 +77,7 @@ public class DesktopIntegration {
         }
     }
 
-    /** Shut down on a separate thread: AWT's event thread must not block on Spring's shutdown. */
+    // shut down on another thread so the tray doesn't freeze
     private void quit() {
         Thread t = new Thread(() -> System.exit(SpringApplication.exit(context, () -> 0)), "campusdesk-quit");
         t.start();

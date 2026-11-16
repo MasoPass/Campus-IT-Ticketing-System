@@ -6,12 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
 
-/**
- * Spring's default String -> Path conversion treats the value as a classpath/URL
- * "resource", which rejects relative paths like "../worker". This converter makes
- * Path settings plain filesystem paths. @ConfigurationPropertiesBinding makes Spring
- * try it before its built-in converters. A blank value becomes null ("not set").
- */
+// so paths in application.properties are read as normal file paths
 @Component
 @ConfigurationPropertiesBinding
 public class StringToPathConverter implements Converter<String, Path> {

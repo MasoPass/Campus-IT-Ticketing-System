@@ -6,10 +6,6 @@ import com.campusdesk.model.User;
 
 import java.util.Arrays;
 
-/**
- * The logged-in user for the current request. Controllers just declare a
- * {@code CurrentUser me} parameter and CurrentUserArgumentResolver fills it in.
- */
 public record CurrentUser(long id, String fullName, String email, Role role) {
 
     public static CurrentUser of(User u) {
@@ -24,7 +20,7 @@ public record CurrentUser(long id, String fullName, String email, Role role) {
         return role == Role.ADMIN;
     }
 
-    /** Throws 403 unless the user has one of these roles. */
+    // 403 unless the user has one of these roles
     public void require(Role... allowed) {
         if (Arrays.asList(allowed).contains(role)) return;
         throw ApiException.forbidden("You don't have permission to do that");

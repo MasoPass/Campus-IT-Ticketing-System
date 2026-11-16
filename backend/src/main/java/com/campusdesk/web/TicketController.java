@@ -36,11 +36,6 @@ public class TicketController {
         this.tickets = tickets;
     }
 
-    /**
-     * GET /api/tickets?status=NEW,ASSIGNED&priority=URGENT&category=3&assignee=me|unassigned|12
-     *                 &requester=5&q=wifi&overdue=true&sort=priority&page=0&size=50
-     * Every parameter is optional. Students always get only their own tickets.
-     */
     @GetMapping
     public PageResult<Ticket> search(CurrentUser me,
                                      @RequestParam(required = false) String status,
@@ -75,7 +70,7 @@ public class TicketController {
         return tickets.search(me, query);
     }
 
-    /** Sidebar badges for staff: open / unassigned / mine / overdue / waiting. */
+    // sidebar badge counts
     @GetMapping("/counts")
     public Map<String, Object> counts(CurrentUser me) {
         return tickets.queueCounts(me);
@@ -118,7 +113,7 @@ public class TicketController {
         return tickets.comment(me, id, body.body(), body.internal());
     }
 
-    /** "NEW,in_progress" -> {NEW, IN_PROGRESS}. Generic over any enum type. */
+    // "NEW,in_progress" -> {NEW, IN_PROGRESS}
     static <E extends Enum<E>> Set<E> parseEnums(String csv, Class<E> type) {
         if (csv == null || csv.isBlank()) return Set.of();
         EnumSet<E> out = EnumSet.noneOf(type);

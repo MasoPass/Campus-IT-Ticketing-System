@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/** Users, settings, dashboard and the lookup data ("meta") the forms need. */
 @RestController
 public class AdminController {
 
@@ -47,7 +46,7 @@ public class AdminController {
         return Map.of("app", "campusdesk", "version", "1.0.0");
     }
 
-    /** Everything the forms need in one call: categories, SLA targets, enums, known buildings. */
+    // categories, SLA targets, enums and buildings for the forms
     @GetMapping("/api/meta")
     public Map<String, Object> meta(CurrentUser me) {
         Map<String, Object> out = new LinkedHashMap<>();
@@ -65,7 +64,6 @@ public class AdminController {
         return dashboard.dashboard(me);
     }
 
-    // ------------------------------------------------------------------ users
 
     @GetMapping("/api/users")
     public List<User> listUsers(CurrentUser me, @RequestParam(required = false) String role) {
@@ -94,7 +92,6 @@ public class AdminController {
         users.resetPassword(me, id, body.password());
     }
 
-    // ------------------------------------------------------------------ settings
 
     @PostMapping("/api/categories")
     @ResponseStatus(HttpStatus.CREATED)

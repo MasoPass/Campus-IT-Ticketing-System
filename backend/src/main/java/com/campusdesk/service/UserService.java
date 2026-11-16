@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.util.List;
 
-/** Admin user management. Users are never deleted (tickets reference them); they're deactivated. */
 @Service
 public class UserService {
 
@@ -31,7 +30,6 @@ public class UserService {
         return users.findAll(role);
     }
 
-    /** Technicians and admins, for the "Assign to" dropdown. Staff only. */
     public List<User> assignable(CurrentUser me) {
         me.requireStaff();
         return users.findAssignable();
@@ -48,10 +46,6 @@ public class UserService {
         return users.findById(id).orElseThrow();
     }
 
-    /**
-     * Edit name / role / active. Guard rail: the system must always keep at least one active
-     * admin, otherwise nobody could manage users or settings ever again.
-     */
     @Transactional
     public User update(CurrentUser me, long id, String fullName, Role role, String studentNumber, boolean active) {
         me.require(Role.ADMIN);

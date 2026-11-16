@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/** Categories and SLA targets. Reading is open to everyone signed in; changing is admin-only. */
 @Service
 public class SettingsService {
 
@@ -40,7 +39,7 @@ public class SettingsService {
         return settings.findCategory(id).orElseThrow();
     }
 
-    /** Categories are never deleted (old tickets point at them), only hidden from the new-ticket form. */
+    // never delete categories, old tickets still use them
     public Category updateCategory(CurrentUser me, long id, String name, boolean active) {
         me.require(Role.ADMIN);
         Category c = settings.findCategory(id).orElseThrow(() -> ApiException.notFound("Category", id));
@@ -48,10 +47,7 @@ public class SettingsService {
         return settings.findCategory(id).orElseThrow();
     }
 
-    /**
-     * New targets apply to tickets created (or re-prioritised) from now on. Existing deadlines
-     * are deliberately left alone: moving the goalposts on open tickets would rewrite history.
-     */
+    // only applies to new or re-prioritised tickets
     public SlaPolicy updateSla(CurrentUser me, Priority priority, int responseMinutes, int resolutionMinutes) {
         me.require(Role.ADMIN);
         SlaPolicy p;

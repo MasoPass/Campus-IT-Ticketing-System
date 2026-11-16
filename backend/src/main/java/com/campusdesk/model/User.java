@@ -2,7 +2,6 @@ package com.campusdesk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-/** A user row. The password hash is never sent to the browser (@JsonIgnore). */
 public record User(
         long id,
         String email,

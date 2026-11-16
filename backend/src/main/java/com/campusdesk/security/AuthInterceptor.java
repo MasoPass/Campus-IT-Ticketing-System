@@ -8,13 +8,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-/**
- * Runs before every /api/** request (except login/register/setup/health, see WebConfig).
- *
- * The session only stores the user's ID. We re-load the user from the database on each
- * request, so if an admin deactivates an account or changes its role, it takes effect on
- * that user's very next click instead of whenever their session happens to expire.
- */
+// checks the user is logged in before every API call
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
 
@@ -29,7 +23,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        HttpSession session = request.getSession(false);   // false = don't create one if missing
+        HttpSession session = request.getSession(false); // don't create a session
         Object uid = session == null ? null : session.getAttribute(SESSION_USER_ID);
         if (!(uid instanceof Long id)) {
             throw ApiException.unauthorized("Please sign in");

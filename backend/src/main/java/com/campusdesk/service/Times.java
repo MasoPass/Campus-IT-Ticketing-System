@@ -4,13 +4,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Every timestamp in the database uses exactly this format (UTC, millisecond precision):
- *     2026-11-12T19:04:05.123Z
- * Because the format never varies, comparing the strings compares the times, so SQL can do
- * "resolution_due_at < :now" and ORDER BY without converting anything.
- * (Instant.toString() is NOT safe for this: it drops ".000" when milliseconds are zero.)
- */
+// fixed format so timestamps sort correctly as strings
 public final class Times {
     private Times() {}
 

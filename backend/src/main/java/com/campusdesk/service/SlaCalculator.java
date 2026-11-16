@@ -6,17 +6,10 @@ import com.campusdesk.model.SlaState;
 import java.time.Duration;
 import java.time.Instant;
 
-/**
- * Pure SLA maths (no Spring, no database), so it's easy to unit test.
- *
- * Simplification worth mentioning in an interview: deadlines use calendar time, 24/7.
- * A real help desk often counts business hours only, and pauses the clock while the
- * ticket is "Waiting on user". Both would slot in here without touching anything else.
- */
 public final class SlaCalculator {
     private SlaCalculator() {}
 
-    /** Below this fraction of the allowed time remaining, an open ticket is "at risk". */
+    // under 25% time left = "at risk"
     public static final double AT_RISK_FRACTION = 0.25;
 
     public record Deadlines(Instant responseDue, Instant resolutionDue) {}
@@ -27,9 +20,6 @@ public final class SlaCalculator {
                 createdAt.plus(Duration.ofMinutes(policy.resolutionMinutes())));
     }
 
-    /**
-     * @param resolvedAt null while the ticket is still open
-     */
     public static SlaState state(Instant createdAt, Instant resolutionDue, Instant resolvedAt, Instant now) {
         if (resolvedAt != null) {
             return resolvedAt.isAfter(resolutionDue) ? SlaState.MISSED : SlaState.MET;

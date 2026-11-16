@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SecurityTest {
 
-    /** Fewer iterations than production so the tests stay fast. */
+    // fewer iterations so tests are fast
     private final PasswordHasher hasher = new PasswordHasher(1_000);
 
     @Test
@@ -41,7 +41,7 @@ class SecurityTest {
         FakeClock clock = new FakeClock(Instant.parse("2026-11-12T19:00:00Z"));
         LoginThrottle throttle = new LoginThrottle(clock);
         for (int i = 0; i < LoginThrottle.MAX_FAILURES; i++) throttle.recordFailure("Sam@Uni.ca");
-        assertEquals(Duration.ofMinutes(10), throttle.retryAfter("sam@uni.ca"));   // case-insensitive
+        assertEquals(Duration.ofMinutes(10), throttle.retryAfter("sam@uni.ca")); // case-insensitive
         clock.now = clock.now.plus(Duration.ofMinutes(11));
         assertEquals(Duration.ZERO, throttle.retryAfter("sam@uni.ca"));
     }
@@ -55,7 +55,7 @@ class SecurityTest {
         assertEquals(Duration.ZERO, throttle.retryAfter("a@b.ca"));
     }
 
-    /** A clock the test can move forward by hand. */
+    // fake clock we can move forward
     static class FakeClock extends Clock {
         Instant now;
 

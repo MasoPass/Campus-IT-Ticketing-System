@@ -10,7 +10,6 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Staff dashboard: every chart in one response. */
 @Service
 public class DashboardService {
 
@@ -28,7 +27,7 @@ public class DashboardService {
         String nowText = Times.format(now);
         String since = Times.format(now.minus(Duration.ofDays(30)));
 
-        // LinkedHashMap keeps insertion order, so the JSON keys come out in a predictable order.
+        // keeps the JSON keys in order
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("summary", dashboard.summary(nowText, since));
         out.put("openByStatus", dashboard.openByStatus());

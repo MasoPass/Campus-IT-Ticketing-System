@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.Duration;
 
-/** Sign-in, student sign-up and the first-run admin setup. Sessions are handled by AuthController. */
 @Service
 public class AuthService {
 
@@ -32,7 +31,7 @@ public class AuthService {
         this.props = props;
     }
 
-    /** True until the first account (the admin) exists. */
+    // true until the admin account exists
     public boolean setupRequired() {
         return users.count() == 0;
     }
@@ -41,10 +40,7 @@ public class AuthService {
         return props.allowStudentSignup();
     }
 
-    /**
-     * Creates the very first account as ADMIN. @Transactional + the count check inside it
-     * mean two simultaneous setup requests can't both succeed (SQLite allows one writer).
-     */
+    // first account is always the admin
     @Transactional
     public User setupAdmin(String fullName, String email, String password) {
         if (!setupRequired()) throw ApiException.conflict("CampusDesk is already set up - please sign in");
@@ -64,10 +60,6 @@ public class AuthService {
         return users.findById(id).orElseThrow();
     }
 
-    /**
-     * Checks the password. The same vague error is used for "no such user" and "wrong
-     * password" so the login form can't be used to find out which emails have accounts.
-     */
     public User login(String email, String password) {
         String key = email == null ? "" : email.trim();
         Duration wait = throttle.retryAfter(key);
@@ -86,8 +78,7 @@ public class AuthService {
         if (!user.active()) throw ApiException.forbidden("This account has been deactivated - contact IT");
 
         throttle.recordSuccess(key);
-        // If the hashing settings were strengthened since this password was saved, upgrade it now
-        // (the only moment we have the plain password).
+        // upgrade old hashes while we have the password
         if (hasher.needsRehash(user.passwordHash())) users.updatePassword(user.id(), hasher.hash(password));
         users.touchLogin(user.id(), now());
         return user;

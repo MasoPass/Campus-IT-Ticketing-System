@@ -21,14 +21,8 @@ import java.util.Optional;
 @Repository
 public class TicketRepository {
 
-    /** Shorthand used in several queries. */
     static final String OPEN = "t.status NOT IN ('RESOLVED', 'CLOSED')";
 
-    /*
-     * Tickets joined to the three names the UI shows. Category and requester are required
-     * (INNER JOIN); the assignee may be missing, so it's a LEFT JOIN - otherwise unassigned
-     * tickets would silently disappear from every list.
-     */
     private static final String SELECT = """
             SELECT t.*,
                    c.name           AS category_name,
@@ -109,10 +103,7 @@ public class TicketRepository {
                 .stream().findFirst();
     }
 
-    /**
-     * Status change. resolved_at / closed_at are set when entering those states and cleared
-     * when a ticket is reopened, so reports only count the final resolution.
-     */
+    // sets resolved_at / closed_at, clears them on reopen
     public void updateStatus(long id, TicketStatus status, String resolution, String now) {
         jdbc.update("""
                         UPDATE tickets SET
@@ -149,10 +140,7 @@ public class TicketRepository {
                 new MapSqlParameterSource().addValue("id", id).addValue("c", categoryId).addValue("now", now));
     }
 
-    /**
-     * Records the FIRST time IT responded. COALESCE keeps the existing value if there is
-     * one, so calling this on every reply is safe and needs no "if" in Java.
-     */
+    // COALESCE keeps the first one
     public void markFirstResponse(long id, String now) {
         jdbc.update("UPDATE tickets SET first_response_at = COALESCE(first_response_at, :now), updated_at = :now WHERE id = :id",
                 new MapSqlParameterSource().addValue("id", id).addValue("now", now));
@@ -163,10 +151,6 @@ public class TicketRepository {
                 new MapSqlParameterSource().addValue("id", id).addValue("now", now));
     }
 
-    /**
-     * The ticket list. The WHERE clause is built from only the filters that are set; every
-     * user value is a named parameter, never pasted into the SQL string (no SQL injection).
-     */
     public PageResult<Ticket> search(TicketQuery q, String now) {
         StringBuilder where = new StringBuilder(" WHERE 1 = 1");
         MapSqlParameterSource p = new MapSqlParameterSource().addValue("now", now);
@@ -196,7 +180,7 @@ public class TicketRepository {
             p.addValue("requester", q.requesterId());
         }
         if (q.overdueOnly()) {
-            // Matches the partial index idx_tickets_open_due.
+            // uses idx_tickets_open_due
             where.append(" AND ").append(OPEN).append(" AND t.resolution_due_at < :now");
         }
         String fts = Rows.ftsQuery(q.text());
@@ -208,8 +192,7 @@ public class TicketRepository {
         long total = Objects.requireNonNull(jdbc.queryForObject(
                 "SELECT COUNT(*) FROM tickets t" + where, p, Long.class));
 
-        // CASE turns the priority text into a sortable number. Closed work sinks to the bottom
-        // of the "due" sort because its deadline no longer matters.
+        // priority as a sortable number
         String orderBy = switch (q.sort()) {
             case NEWEST -> " ORDER BY t.id DESC";
             case OLDEST -> " ORDER BY t.id ASC";
@@ -224,10 +207,7 @@ public class TicketRepository {
         return new PageResult<>(items, q.page(), q.size(), total);
     }
 
-    /**
-     * The sidebar badges in ONE query (conditional aggregation): open, unassigned, mine,
-     * overdue and waiting-on-user counts, instead of five separate COUNT queries.
-     */
+    // all the badge counts in one query
     public Map<String, Object> queueCounts(long userId, String now) {
         return jdbc.queryForMap("""
                         SELECT

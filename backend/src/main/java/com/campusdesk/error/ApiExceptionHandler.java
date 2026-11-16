@@ -13,10 +13,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.stream.Collectors;
 
-/**
- * Central place that converts exceptions into JSON error responses
- * (RFC 7807 "problem detail": {"status":404,"detail":"Project 9 not found",...}).
- */
+// turns exceptions into JSON error responses
 @RestControllerAdvice
 public class ApiExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
@@ -44,11 +41,7 @@ public class ApiExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.PAYLOAD_TOO_LARGE, "File is too large");
     }
 
-    /**
-     * SQLite isn't in Spring's built-in error-code table, so constraint violations arrive
-     * as a generic DataAccessException. We look at the driver's message to map the two
-     * we care about to proper HTTP codes.
-     */
+    // Spring doesn't map SQLite constraint errors, so handle them here
     @ExceptionHandler(DataAccessException.class)
     public ProblemDetail handleDb(DataAccessException e) {
         String msg = String.valueOf(e.getMostSpecificCause().getMessage());

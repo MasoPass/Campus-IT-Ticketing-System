@@ -10,11 +10,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Builds the connection pool by hand instead of using spring.datasource.* so we can
- * (1) create the data folder before SQLite tries to open the file, and
- * (2) set SQLite PRAGMAs on every connection.
- */
 @Configuration
 public class DatabaseConfig {
 
@@ -28,14 +23,10 @@ public class DatabaseConfig {
         cfg.setPoolName("campusdesk-sqlite");
         cfg.setJdbcUrl("jdbc:sqlite:" + dbFile);
 
-        // SQLite allows many readers but only ONE writer at a time, so a big pool
-        // gains nothing. A few connections let the UI read while another request writes.
+        // SQLite only has one writer, so a small pool is enough
         cfg.setMaximumPoolSize(4);
 
-        //  foreign_keys - SQLite does NOT enforce FOREIGN KEY / ON DELETE CASCADE unless
-        //                 this is switched on, per connection.
-        //  journal_mode - WAL (write-ahead log) lets readers keep reading during a write.
-        //  busy_timeout - wait up to 5s for a lock instead of failing with SQLITE_BUSY.
+        // foreign keys are off by default in SQLite, plus WAL mode and a 5s busy timeout
         cfg.addDataSourceProperty("foreign_keys", "true");
         cfg.addDataSourceProperty("journal_mode", "WAL");
         cfg.addDataSourceProperty("busy_timeout", "5000");

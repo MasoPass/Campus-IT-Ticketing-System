@@ -7,10 +7,6 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 import java.util.Optional;
 
-/**
- * Entry point. Before Spring starts we do the desktop housekeeping (see DesktopBootstrap):
- * reuse an already-running instance, choose the data folder and a free port.
- */
 @SpringBootApplication
 @ConfigurationPropertiesScan
 public class CampusDeskApplication {
@@ -35,7 +31,7 @@ public class CampusDeskApplication {
         }
 
         new SpringApplicationBuilder(CampusDeskApplication.class)
-                .headless(!desktop)   // the tray icon needs AWT, which Spring disables by default
+                .headless(!desktop) // needed for the tray icon
                 .run(args);
     }
 }

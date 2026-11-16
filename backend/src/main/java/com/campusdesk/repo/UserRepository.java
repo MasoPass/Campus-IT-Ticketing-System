@@ -38,7 +38,6 @@ public class UserRepository {
                 .stream().findFirst();
     }
 
-    /** Case-insensitive (the column is COLLATE NOCASE). */
     public Optional<User> findByEmail(String email) {
         return jdbc.query("SELECT * FROM users WHERE email = :email", new MapSqlParameterSource("email", email.trim()), MAPPER)
                 .stream().findFirst();
@@ -55,7 +54,6 @@ public class UserRepository {
         return n == null ? 0 : n;
     }
 
-    /** Staff first, then by name. Optional role filter. */
     public List<User> findAll(Role role) {
         String where = role == null ? "" : " WHERE role = :role";
         return jdbc.query("SELECT * FROM users" + where
@@ -63,7 +61,7 @@ public class UserRepository {
                 new MapSqlParameterSource("role", role == null ? null : role.name()), MAPPER);
     }
 
-    /** Active technicians and admins - the people a ticket can be assigned to. */
+    // people a ticket can be assigned to
     public List<User> findAssignable() {
         return jdbc.query("""
                         SELECT * FROM users WHERE active = 1 AND role IN ('TECHNICIAN', 'ADMIN')

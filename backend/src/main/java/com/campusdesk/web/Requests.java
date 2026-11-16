@@ -5,7 +5,6 @@ import com.campusdesk.model.Role;
 import com.campusdesk.model.TicketStatus;
 import jakarta.validation.constraints.NotNull;
 
-/** JSON request bodies. Detailed rules (lengths, formats) live in Validation.java. */
 public final class Requests {
     private Requests() {}
 
@@ -21,7 +20,7 @@ public final class Requests {
 
     public record PriorityChange(@NotNull Priority priority) {}
 
-    /** assigneeId null = unassign. */
+    // null = unassign
     public record Assign(Long assigneeId) {}
 
     public record CategoryChange(@NotNull Long categoryId) {}

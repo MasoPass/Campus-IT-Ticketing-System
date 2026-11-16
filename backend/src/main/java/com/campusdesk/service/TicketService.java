@@ -31,20 +31,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * Everything that happens to a ticket. Each public method follows the same pattern:
- *   1. load the ticket and check this user may see it (404 if not - we don't even confirm it exists)
- *   2. check this user may do this action (403 otherwise)
- *   3. in ONE transaction: change the ticket + add a timeline event
- *   4. refresh the search index
- */
 @Service
 public class TicketService {
 
     public static final int MAX_TITLE = 150;
     public static final int MAX_TEXT = 10_000;
 
-    /** What the ticket page needs: the ticket, its visible timeline, and what this user may do. */
     public record TicketDetail(Ticket ticket, List<Comment> timeline, Set<TicketStatus> allowedStatuses,
                                boolean canAssign, boolean canTake, boolean canChangePriority,
                                boolean canChangeCategory, boolean canWriteInternal) {}
@@ -71,10 +63,9 @@ public class TicketService {
         this.clock = clock;
     }
 
-    // ================================================================== reading
 
     public PageResult<Ticket> search(CurrentUser me, TicketQuery query) {
-        // Students only ever see their own tickets, whatever filters they send.
+        // students only ever see their own tickets
         TicketQuery q = me.isStaff() ? query : query.forRequester(me.id());
         Instant now = clock.instant();
         PageResult<Ticket> page = tickets.search(q, Times.format(now));
@@ -101,7 +92,6 @@ public class TicketService {
         return tickets.queueCounts(me.id(), Times.format(clock.instant()));
     }
 
-    // ================================================================== creating
 
     public TicketDetail create(CurrentUser me, NewTicketRequest r) {
         String title = Validation.text(r.title(), "Title", MAX_TITLE, true);
@@ -115,7 +105,7 @@ public class TicketService {
                 .filter(Category::active)
                 .orElseThrow(() -> ApiException.badRequest("Unknown category"));
 
-        // New tickets start at MEDIUM; IT re-prioritises during triage.
+        // everything starts at MEDIUM until triage
         Priority priority = Priority.MEDIUM;
         Instant now = clock.instant();
         SlaCalculator.Deadlines due = SlaCalculator.deadlines(now, settings.slaFor(priority));
@@ -132,12 +122,7 @@ public class TicketService {
         return detail(me, id);
     }
 
-    // ================================================================== changing
 
-    /**
-     * Status change, checked against the state machine (TicketWorkflow).
-     * A technician starting a NEW ticket picks it up: it becomes assigned to them.
-     */
     public TicketDetail changeStatus(CurrentUser me, long id, TicketStatus to, String resolutionText) {
         Ticket t = visibleTicket(me, id);
         boolean isAssignee = me.id() == Objects.requireNonNullElse(t.assigneeId(), -1L);
@@ -165,7 +150,7 @@ public class TicketService {
         return detail(me, id);
     }
 
-    /** Admins assign to anyone on staff (or unassign); technicians can only take unassigned tickets. */
+    // admins assign anyone, techs can only take unassigned ones
     public TicketDetail assign(CurrentUser me, long id, Long assigneeId) {
         me.requireStaff();
         Ticket t = visibleTicket(me, id);
@@ -183,7 +168,7 @@ public class TicketService {
         }
         if (Objects.equals(assigneeId, t.assigneeId())) return detail(me, id);
 
-        // Keep status and assignment consistent: NEW <-> ASSIGNED follow the assignee.
+        // keep status in sync with the assignee
         TicketStatus status = t.status();
         if (assigneeId != null && status == TicketStatus.NEW) status = TicketStatus.ASSIGNED;
         if (assigneeId == null && status == TicketStatus.ASSIGNED) status = TicketStatus.NEW;
@@ -200,11 +185,6 @@ public class TicketService {
         return detail(me, id);
     }
 
-    /**
-     * Admin-only. The SLA deadlines are recalculated from the ORIGINAL creation time with the
-     * new priority's targets, so raising a 2-day-old ticket to URGENT makes it overdue at once.
-     * Logged as an INTERNAL event: students don't see priority juggling.
-     */
     public TicketDetail changePriority(CurrentUser me, long id, Priority priority) {
         me.require(Role.ADMIN);
         Ticket t = visibleTicket(me, id);
@@ -236,11 +216,7 @@ public class TicketService {
         return detail(me, id);
     }
 
-    /**
-     * Add a reply (visible to the student) or an internal note (IT only).
-     * - A staff reply counts as the "first response" for the SLA.
-     * - A student replying to a ticket that was waiting on them puts it back to In progress.
-     */
+    // reply or internal note
     public TicketDetail comment(CurrentUser me, long id, String body, boolean internal) {
         Ticket t = visibleTicket(me, id);
         String text = Validation.text(body, "Message", MAX_TEXT, true);
@@ -263,12 +239,8 @@ public class TicketService {
         return detail(me, id);
     }
 
-    // ================================================================== helpers
 
-    /**
-     * Loads a ticket the user is allowed to see. For a student asking for someone else's
-     * ticket we answer 404, not 403: a 403 would confirm that ticket number exists.
-     */
+    // 404 if the user isn't allowed to see it
     private Ticket visibleTicket(CurrentUser me, long id) {
         Ticket t = tickets.findById(id).orElseThrow(() -> ApiException.notFound("Ticket", id));
         if (!me.isStaff() && t.requesterId() != me.id()) throw ApiException.notFound("Ticket", id);

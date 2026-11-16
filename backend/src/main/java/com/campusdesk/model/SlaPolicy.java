@@ -1,6 +1,6 @@
 package com.campusdesk.model;
 
-/** Response and resolution targets (minutes) for one priority. */
+// targets in minutes
 public record SlaPolicy(Priority priority, int responseMinutes, int resolutionMinutes) {
     public SlaPolicy {
         if (responseMinutes <= 0 || resolutionMinutes < responseMinutes) {

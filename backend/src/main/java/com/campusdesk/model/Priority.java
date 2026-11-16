@@ -1,6 +1,6 @@
 package com.campusdesk.model;
 
-/** Declared most-urgent first, so ordinal() can be used as a sort key (URGENT = 0). */
+// most urgent first so ordinal() works for sorting
 public enum Priority {
     URGENT, HIGH, MEDIUM, LOW
 }
